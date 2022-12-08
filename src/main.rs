@@ -82,7 +82,7 @@ fn insertion_sort<T: PartialOrd + std::fmt::Debug>(v: &mut [T]) {
 //
 // Note that the parameter v *has* to be mutable because we're 
 // modifying it in place.
-fn quicksort<T: PartialOrd + std::fmt::Debug>(v: &mut [T]) {
+fn quicksort<T: PartialOrd + std::fmt::Debug + std::cmp::Ord>(v: &mut [T]) {
     // Quicksort is a recursive solution where we select a pivot
     // value (usually just the first element) and split (in place)
     // the array into two sections: The "front" is all < the pivot,
@@ -103,19 +103,50 @@ fn quicksort<T: PartialOrd + std::fmt::Debug>(v: &mut [T]) {
     if length < 2 {
         return;
     }
+    
+    _quicksort(v,0,(length-1) as isize);
+}
+fn _quicksort<T: Ord>(v: &mut [T], low: isize, high: isize){
+    
+    if low < high {
 
     // Now choose a pivot and do the organizing.
     
     // ...
-
-    let smaller = 0; // Totally wrong – you should fix this.
-
+    let smaller = partition(v, low, high); // Totally wrong – you should fix this.
+    
     // Sort all the items < pivot
-    quicksort(&mut v[0..smaller]);
+    _quicksort(v, low, smaller-1);
     // Sort all the items ≥ pivot, *not* including the
     // pivot value itself. If we don't include the +1
     // here you can end up in infinite recursions.
-    quicksort(&mut v[smaller+1..length]);
+    _quicksort(v, smaller+1, high);
+    }
+}
+
+fn partition<T: Ord>(v: &mut [T], low: isize, high: isize) -> isize {
+
+    let pivot = high as usize;
+    let mut store_index = low - 1;
+    let mut last_index = high;
+
+    loop {
+        store_index += 1;
+        while v[store_index as usize] < v[pivot] {
+            store_index += 1;
+        }
+        last_index -= 1;
+        while last_index >= 0 && v[last_index as usize] > v[pivot] {
+            last_index -= 1;
+        }
+        if store_index >= last_index {
+            break;
+        } else {
+            v.swap(store_index as usize, last_index as usize);
+        }
+    }
+    v.swap(store_index as usize, pivot as usize);
+    store_index
 }
 
 // Merge sort can't be done "in place", so it needs to return a _new_
@@ -168,7 +199,37 @@ fn merge_sort<T: PartialOrd + std::marker::Copy + std::fmt::Debug>(v: &[T]) -> V
 // unused. Presumably you'll actually use `ys` in your solution,
 // so that warning should go away. You can remove this comment
 // if you wish since it won't be relevant any longer.
-fn merge<T: PartialOrd + std::marker::Copy + std::fmt::Debug>(xs: Vec<T>, ys: Vec<T>) -> Vec<T> {
+fn merge<T: std::cmp::PartialOrd + std::marker::Copy>(left: Vec<T>, right: Vec<T>) -> Vec<T> {
+    let mut i = 0;
+    let mut j = 0;
+    let mut merged: Vec<T> = Vec::<T>::new();
+
+    while i < left.len() && j < right.len() {
+        if left[i] < right[j] {
+            merged.push(left[i]);
+            i = i + 1;
+        } else {
+            merged.push(right[j]);
+            j = j + 1;
+        }
+    }
+
+    if i < left.len() {
+        while i < left.len() {
+            merged.push(left[i]);
+            i = i + 1;
+        }
+    }
+
+    if j < right.len() {
+        while j < right.len() {
+            merged.push(right[j]);
+            j = j + 1;
+        }
+    }
+
+    merged
+}
     // This takes two sorted vectors, like:
     //    <5, 8, 9> and
     //    <0, 2, 3, 6>
@@ -184,8 +245,8 @@ fn merge<T: PartialOrd + std::marker::Copy + std::fmt::Debug>(xs: Vec<T>, ys: Ve
 
     // This is totally wrong and will not sort. You should replace it
     // with something useful. :)
-    xs
-}
+
+
 
 fn is_sorted<T: PartialOrd>(slice: &[T]) -> bool {
     let len = slice.len();
